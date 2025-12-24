@@ -5,17 +5,20 @@ import { LoginDto } from './dto/loginDto';
 
 @Controller('auth')
 export class AuthController {
-    constructor(private readonly authService:AuthService ){}
+  constructor(private readonly authService: AuthService) {}
 
+  @Post('register')
+  async register(@Body() registerDto: registerDto) {
+    return this.authService.register(registerDto);
+  }
 
-    @Post('register')
-    register(@Body() registerDto : registerDto){
-        return this.authService.register(registerDto)
-    }
+  @Post('login')
+  async login(@Body() loginDto: LoginDto) {
+    const user = await this.authService.validateUser(
+      loginDto.email,
+      loginDto.password,
+    );
 
-    @Post('login')
-    login(@Body() loginDto : any){
-       return this.authService.login(LoginDto)
-    }
-
+    return this.authService.login(user);
+  }
 }

@@ -1,33 +1,36 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
-import { use } from 'passport';
-import { User } from 'src/users/schemas/user.schema';
 import { JwtService } from '@nestjs/jwt';
+import { Repository } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
+import { User } from 'src/users/entities/user.entity';
 import * as bcrypt from 'bcrypt';
-import { registerDto } from './dto/registerDto';
+import { registerDto} from './dto/registerDto';
 
 @Injectable()
 export class AuthService {
-        constructor(@InjectModel(User.name) private userModel: Model<User>,
-                    private jwtservice: JwtService,
-        ) { }
+  constructor(
+    @InjectRepository(User)
+    private userRepository: Repository<User>,
+    private jwtService: JwtService,
+  ) {}
 
-    async register(dto:registerDto){
-        const hashedPassword =  await bcrypt.hash(dto.password, 10)
-        const user = await this.userModel.create({
-            ...dto,
-            password : hashedPassword
-        })
+  async register(dto: registerDto) {
+    const hashedPassword = await bcrypt.hash(dto.password, 10);
 
-        return{
-            token: this.jwtservice.sign({sub: user._id})
-        }
+    const user = this.userRepository.create({
+      ...dto,
+      password: hashedPassword,
+    });
 
-    }
+    await this.userRepository.save(user);
 
-    async validateUser(email: string, password: string): Promise<User> {
-    const user = await this.userModel.findOne({ email });
+    return {
+      token: this.jwtService.sign({ sub: user.id }),
+    };
+  }
+
+  async validateUser(email: string, password: string): Promise<User> {
+    const user = await this.userRepository.findOne({ where: { email } });
     if (!user) throw new UnauthorizedException('Invalid credentials');
 
     const isMatch = await bcrypt.compare(password, user.password);
@@ -36,11 +39,11 @@ export class AuthService {
     return user;
   }
 
-    async login(user:any){
-        const payload = {sub: user.id,email:user.email};
-        return{
-            message: "u logged in",
-            accec_token : this.jwtservice.sign(payload)
-        }
-    }
+  async login(user: User) {
+    const payload = { sub: user.id, email: user.email };
+    return {
+      message: 'You are logged in',
+      access_token: this.jwtService.sign(payload),
+    };
+  }
 }

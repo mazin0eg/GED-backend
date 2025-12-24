@@ -1,15 +1,23 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { User } from './schemas/user.schema';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { User } from './entities/user.entity';
 
 @Injectable()
 export class UsersService {
   constructor(
-    @InjectModel(User.name)
-    private userModel: Model<User>,
-  ) {
-   
-    
+    @InjectRepository(User)
+    private userRepo: Repository<User>,
+  ) {}
+
+  findByEmail(email: string) {
+    return this.userRepo.findOne({ where: { email } });
+  }
+
+  create(user: Partial<User>) {
+    return this.userRepo.save(user);
   }
 }
+
