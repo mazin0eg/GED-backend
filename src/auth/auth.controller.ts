@@ -1,7 +1,8 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { registerDto} from './dto/registerDto';
 import { LoginDto } from './dto/loginDto';
+import { Auth } from 'src/roles/decorators/roles.decorator';
 
 @Controller('auth')
 export class AuthController {
@@ -20,5 +21,11 @@ export class AuthController {
     );
 
     return this.authService.login(user);
+  }
+
+  @Auth('user')
+  @Get('me')
+  me(@Req() req : any){
+    return `hello ${req?.user.email}`;
   }
 }
