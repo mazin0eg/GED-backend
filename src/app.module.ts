@@ -7,10 +7,12 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { RolesModule } from './roles/roles.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { MinioService } from './minio/minio.service';
+import { FilesModule } from './files/files.module';
 
 @Module({
   imports: [
-   
+
     ConfigModule.forRoot({
       isGlobal: true,
     }),
@@ -26,26 +28,29 @@ import { TypeOrmModule } from '@nestjs/typeorm';
       inject: [ConfigService],
     }),
     TypeOrmModule.forRootAsync({
-      imports:[ConfigModule],
-      inject:[ConfigService],
-      useFactory:(config:ConfigService)=>({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+
+      useFactory: (config: ConfigService) => ({
         type: 'postgres',
         host: config.get('DB_HOST'),
-        port:  Number(config.get('DB_PORT')),
-        username:config.get('DB_USERNAME'),
+        port: Number(config.get('DB_PORT')),
+        username: config.get('DB_USERNAME'),
         password: config.get('DB_PASSWORD'),
         database: config.get('DB_NAME'),
-        autoLoadEntities : true,
-        synchronize:  true
+        synchronize: true,
+        autoLoadEntities: true,
 
       })
 
     }),
     RolesModule,
-     AuthModule, 
-     UsersModule,
+    AuthModule,
+    UsersModule,
+    FilesModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, MinioService],
+  exports: [MinioService],
 })
 export class AppModule { }

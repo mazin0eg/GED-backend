@@ -5,8 +5,10 @@ import {
   Column,
   ManyToMany,
   JoinTable,
+  OneToMany,
 } from 'typeorm';
 import { Role } from '../../roles/entities/role.entity';
+import { FileEntity } from 'src/files/entities/file.entity';
 
 @Entity('users')
 export class User {
@@ -24,9 +26,12 @@ export class User {
 
   @ManyToMany(() => Role, (role) => role.users, { eager: true })
   @JoinTable({
-    name: 'user_roles', // pivot table
+    name: 'user_roles', 
     joinColumn: { name: 'user_id' },
     inverseJoinColumn: { name: 'role_id' },
   })
   roles: Role[];
+
+  @OneToMany(() => FileEntity, file => file.idOwner)
+  files: File[];
 }
