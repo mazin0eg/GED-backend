@@ -5,10 +5,14 @@ import { UpdateFileDto } from './dto/update-file.dto';
 import { FileFieldsInterceptor, FileInterceptor } from '@nestjs/platform-express';
 import { User } from 'src/users/entities/user.entity';
 import { Auth } from 'src/roles/decorators/roles.decorator';
+import { Repository } from 'typeorm';
+import { FileEntity } from './entities/file.entity';
 
 @Controller('files')
 export class FilesController {
-  constructor(private readonly filesService: FilesService) { }
+  constructor(
+  private readonly filesService: FilesService
+  ) { }
 
   @Post('upload')
   @Auth("user", "admin", "manager")
@@ -29,6 +33,13 @@ export class FilesController {
     const userId = req.user?.id;
 
     return this.filesService.getFileById(id, userId);
+  }
+
+
+  async deleteFile(@Param('id', ParseIntPipe) id: number, @Req() req: any) {
+    const userId = req.user?.id;
+    const userRole = req.user?.role; 
+    return this.filesService.deleteFile(id, userId, userRole);
   }
 
 

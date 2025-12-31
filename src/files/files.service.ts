@@ -1,4 +1,4 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { CreateFileDto } from './dto/create-file.dto';
 import { UpdateFileDto } from './dto/update-file.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -12,7 +12,7 @@ export class FilesService {
   constructor(
     @InjectRepository(FileEntity)
     private readonly fileRepo: Repository<FileEntity>,
-    private readonly minioService: MinioService
+    private readonly minioService: MinioService,
   ) { }
 
   async uploadToMinio(file: Express.Multer.File, bucketName: string, idOwner: number) {
@@ -35,15 +35,34 @@ export class FilesService {
     return this.minioService.getFileUrl(file.bucket, file.keyObject)
   }
 
-  async deleteFile(file: FileEntity) {
+  async deleteFile(id: number, userId: number, userRole: string): Promise<{ message: string }> {
+    const file = await this.fileRepo.findOne({
+      where: { id },
+      relations: ['idOwner'],
+    });
+
+    if (!file) {
+      throw new NotFoundException('File not found');
+    }
+
+    const isOwner = file.idOwner?.id === userId;
+    const isAdmin = userRole === 'admin';
+
+    if (!isOwner && !isAdmin) {
+      throw new ForbiddenException('You can only delete your own files');
+    }
+
     await this.minioService.deleteFile(file.bucket, file.keyObject);
-    return this.fileRepo.remove(file)
+
+    await this.fileRepo.remove(file);
+
+    return { message: 'File deleted successfully' };
   }
 
   async getFileById(fileId: number, userId: number) {
     const file = await this.fileRepo.findOne({
       where: { id: fileId },
-      relations: ['owner'],
+      relations: ['idOwner'],
     });
 
     if (!file) {
