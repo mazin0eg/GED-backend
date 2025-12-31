@@ -1,34 +1,37 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseInterceptors, UploadedFile, Req, UnauthorizedException, ParseIntPipe } from '@nestjs/common';
 import { FilesService } from './files.service';
 import { CreateFileDto } from './dto/create-file.dto';
 import { UpdateFileDto } from './dto/update-file.dto';
+import { FileFieldsInterceptor, FileInterceptor } from '@nestjs/platform-express';
+import { User } from 'src/users/entities/user.entity';
+import { Auth } from 'src/roles/decorators/roles.decorator';
 
 @Controller('files')
 export class FilesController {
-  constructor(private readonly filesService: FilesService) {}
+  constructor(private readonly filesService: FilesService) { }
 
-  @Post()
-  create(@Body() createFileDto: CreateFileDto) {
-    return this.filesService.create(createFileDto);
-  }
+  @Post('upload')
+  @Auth("user", "admin", "manager")
+  @UseInterceptors(FileInterceptor('file'))
+  async uploadFile(@UploadedFile() file: Express.Multer.File, @Req() req: Request & { user: User }) {
+    const userId = req.user?.id
+    
+    const bucketName = 'ged'
 
-  @Get()
-  findAll() {
-    return this.filesService.findAll();
+    const saveFile = await this.filesService.uploadToMinio(file, bucketName, userId)
+
+    return saveFile
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.filesService.findOne(+id);
+  @Auth("user", "admin", "manager")
+  async getFile(@Param('id', ParseIntPipe) id: number,@Req() req: any,) {
+    const userId = req.user?.id;
+
+    return this.filesService.getFileById(id, userId);
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateFileDto: UpdateFileDto) {
-    return this.filesService.update(+id, updateFileDto);
-  }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.filesService.remove(+id);
-  }
+
+
 }

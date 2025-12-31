@@ -9,6 +9,8 @@ import { RolesModule } from './roles/roles.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MinioService } from './minio/minio.service';
 import { FilesModule } from './files/files.module';
+import { MinioModule } from './minio/minio.module';
+import { JwtModule } from '@nestjs/jwt';
 
 @Module({
   imports: [
@@ -44,13 +46,23 @@ import { FilesModule } from './files/files.module';
       })
 
     }),
+    JwtModule.registerAsync({
+      imports:[ConfigModule],
+      inject:[ConfigService],
+      global: true,
+      useFactory:(ConfigService: ConfigService)=>({
+        secret:ConfigService.get<string>('JWT_SECRET'),
+        signOptions:{expiresIn:'1d'}
+      })
+    }),
     RolesModule,
     AuthModule,
     UsersModule,
     FilesModule,
+    MinioModule
   ],
   controllers: [AppController],
-  providers: [AppService, MinioService],
-  exports: [MinioService],
+  providers: [AppService],
+  exports: [JwtModule]
 })
 export class AppModule { }
