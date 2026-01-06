@@ -33,17 +33,26 @@ import { JwtModule } from '@nestjs/jwt';
       imports: [ConfigModule],
       inject: [ConfigService],
 
-      useFactory: (config: ConfigService) => ({
-        type: 'postgres',
-        host: config.get('DB_HOST'),
-        port: Number(config.get('DB_PORT')),
-        username: config.get('DB_USERNAME'),
-        password: config.get('DB_PASSWORD'),
-        database: config.get('DB_NAME'),
-        synchronize: true,
-        autoLoadEntities: true,
+      useFactory: (config: ConfigService) => {
+        const host = config.get('DB_HOST');
+        const port = Number(config.get('DB_PORT'));
+        const username = config.get('DB_USERNAME');
+        const password = config.get('DB_PASSWORD');
+        const database = config.get('DB_NAME');
 
-      })
+        console.log('[DB Config]', { host, port, username, database, passwordLength: password?.length });
+
+        return {
+          type: 'postgres',
+          host,
+          port,
+          username,
+          password,
+          database,
+          synchronize: true,
+          autoLoadEntities: true,
+        };
+      }
 
     }),
     JwtModule.registerAsync({

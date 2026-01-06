@@ -3,6 +3,7 @@ import { JwtService } from '@nestjs/jwt';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from 'src/users/entities/user.entity';
+import { Role } from 'src/roles/entities/role.entity';
 import * as bcrypt from 'bcrypt';
 import { registerDto} from './dto/registerDto';
 
@@ -11,21 +12,31 @@ export class AuthService {
   constructor(
     @InjectRepository(User)
     private userRepository: Repository<User>,
+    @InjectRepository(Role)
+    private roleRepository: Repository<Role>,
     private jwtService: JwtService,
   ) {}
 
   async register(dto: registerDto) {
     const hashedPassword = await bcrypt.hash(dto.password, 10);
 
+    // Find admin role (seeded on startup); fallback create if missing
+    let adminRole = await this.roleRepository.findOne({ where: { name: 'admin' } });
+    if (!adminRole) {
+      adminRole = await this.roleRepository.save({ name: 'admin', description: 'Administrator role' });
+    }
+
     const user = this.userRepository.create({
       ...dto,
       password: hashedPassword,
+      roles: [adminRole],
     });
 
     await this.userRepository.save(user);
-
+    const payload = { sub: user.id, ...user };
     return {
-      token: this.jwtService.sign({ sub: user.id }),
+      message: 'You are logged in',
+      access_token: this.jwtService.sign(payload),
     };
   }
 

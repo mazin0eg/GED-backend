@@ -13,6 +13,8 @@ export class RoleSeed implements OnModuleInit {
         const roles = [
             { name: 'admin', description: 'Administrator role' },
             { name: 'user', description: 'Regular user role' },
+            { name: 'hr', description: 'Human Resources role' },
+            { name: 'manager', description: 'Manager role' },
         ];
         for (const role of roles) {
             try{
