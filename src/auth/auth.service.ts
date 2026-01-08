@@ -20,7 +20,6 @@ export class AuthService {
   async register(dto: registerDto) {
     const hashedPassword = await bcrypt.hash(dto.password, 10);
 
-    // Find admin role (seeded on startup); fallback create if missing
     let adminRole = await this.roleRepository.findOne({ where: { name: 'admin' } });
     if (!adminRole) {
       adminRole = await this.roleRepository.save({ name: 'admin', description: 'Administrator role' });

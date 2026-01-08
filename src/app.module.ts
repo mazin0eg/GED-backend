@@ -11,6 +11,7 @@ import { MinioService } from './minio/minio.service';
 import { FilesModule } from './files/files.module';
 import { MinioModule } from './minio/minio.module';
 import { JwtModule } from '@nestjs/jwt';
+import { OpportunitiesModule } from './opportunities/opportunities.module';
 
 @Module({
   imports: [
@@ -68,7 +69,8 @@ import { JwtModule } from '@nestjs/jwt';
     AuthModule,
     UsersModule,
     FilesModule,
-    MinioModule
+    MinioModule,
+    OpportunitiesModule
   ],
   controllers: [AppController],
   providers: [AppService],
